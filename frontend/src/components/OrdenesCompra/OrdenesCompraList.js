@@ -21,7 +21,7 @@ function OrdenesCompraList() {
 
     const handleEdit = (id) => {
         navigate(`/ordenes/edit/${id}`);
-    };
+    }; 
 
     const handleCreate = () => {
         navigate('/ordenes/create');

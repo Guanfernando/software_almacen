@@ -10,60 +10,60 @@ function OrdenCompraForm() {
         productos: [{
             codigo: '',
             descripcion: '',
-            cantidad: '',
-            vr_unitario: '',
+            cantidad: 1,
+            vr_unitario: 0,
             subtotal: 0
         }]
     });
-    
-    const [clientes, setClientes] = useState([]);
+
     const [productosDisponibles, setProductosDisponibles] = useState([]);
     const [numeroDocumento, setNumeroDocumento] = useState('');
     const navigate = useNavigate();
     const { id } = useParams();
     const isEdit = !!id;
 
+    // Cargar productos disponibles y, si es edición, obtener datos de la orden
     useEffect(() => {
+        let isMounted = true;
+
+        const cargarProductos = async () => {
+            try {
+                const response = await axios.get('http://localhost:5000/api/productos');
+                if (isMounted) setProductosDisponibles(response.data);
+            } catch (error) {
+                console.error('Error al cargar productos:', error);
+            }
+        };
+
+        const obtenerOrden = async () => {
+            try {
+                const response = await axios.get(`http://localhost:5000/api/ordenes/${id}`);
+                setOrden(response.data);
+                setNumeroDocumento(response.data.cliente.numero_documento);
+            } catch (error) {
+                console.error('Error al obtener la orden:', error);
+            }
+        };
+
         cargarProductos();
-        if (isEdit) {
-            obtenerOrden();
-        }
-    }, [isEdit]);
+        if (isEdit) obtenerOrden();
 
-    const cargarProductos = async () => {
-        try {
-            const response = await axios.get('http://localhost:5000/api/productos');
-            setProductosDisponibles(response.data);
-        } catch (error) {
-            console.error('Error al cargar productos:', error);
-        }
-    };
+        return () => { isMounted = false; };
+    }, [id, isEdit]);
 
+    // Buscar cliente por documento
     const buscarCliente = async () => {
         if (!numeroDocumento) return;
-        
         try {
             const response = await axios.get(`http://localhost:5000/api/clientes/${numeroDocumento}`);
-            setOrden({
-                ...orden,
-                cliente: response.data
-            });
+            setOrden({ ...orden, cliente: response.data });
         } catch (error) {
             console.error('Error al buscar cliente:', error);
             alert('Cliente no encontrado');
         }
     };
 
-    const obtenerOrden = async () => {
-        try {
-            const response = await axios.get(`http://localhost:5000/api/ordenes/${id}`);
-            setOrden(response.data);
-            setNumeroDocumento(response.data.cliente.numero_documento);
-        } catch (error) {
-            console.error('Error al obtener la orden:', error);
-        }
-    };
-
+    // Manejo de productos en la orden
     const handleProductoChange = (index, field, value) => {
         const nuevosProductos = [...orden.productos];
         const producto = nuevosProductos[index];
@@ -80,21 +80,16 @@ function OrdenCompraForm() {
                     subtotal: (producto.cantidad || 1) * productoSeleccionado.vr_unitario
                 };
             }
-        } else {
+        } else if (field === 'cantidad') {
+            const cantidad = parseInt(value, 10) || 1;
             nuevosProductos[index] = {
                 ...producto,
-                [field]: value
+                cantidad,
+                subtotal: cantidad * producto.vr_unitario
             };
-
-            if (field === 'cantidad') {
-                nuevosProductos[index].subtotal = value * producto.vr_unitario;
-            }
         }
 
-        setOrden({
-            ...orden,
-            productos: nuevosProductos
-        });
+        setOrden({ ...orden, productos: nuevosProductos });
     };
 
     const agregarProducto = () => {
@@ -103,8 +98,8 @@ function OrdenCompraForm() {
             productos: [...orden.productos, {
                 codigo: '',
                 descripcion: '',
-                cantidad: '',
-                vr_unitario: '',
+                cantidad: 1,
+                vr_unitario: 0,
                 subtotal: 0
             }]
         });
@@ -119,10 +114,12 @@ function OrdenCompraForm() {
         }
     };
 
+    // Calcular el total de la orden
     const calcularTotal = () => {
         return orden.productos.reduce((total, producto) => total + (producto.subtotal || 0), 0);
     };
 
+    // Manejar el envío del formulario (crear o actualizar orden)
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!orden.cliente) {
@@ -150,11 +147,12 @@ function OrdenCompraForm() {
         }
     };
 
+    // Renderizado del formulario
     return (
         <div className="container mt-5">
             <h2 className="text-center mb-4">{isEdit ? 'Editar Orden de Compra' : 'Nueva Orden de Compra'}</h2>
             <form onSubmit={handleSubmit}>
-                {/* Sección de Cliente */}
+                {/* Información del Cliente */}
                 <div className="card mb-4">
                     <div className="card-header">
                         <h5 className="card-title mb-0">Información del Cliente</h5>
@@ -195,7 +193,7 @@ function OrdenCompraForm() {
                     </div>
                 </div>
 
-                {/* Sección de Productos */}
+                {/* Productos */}
                 <div className="card mb-4">
                     <div className="card-header">
                         <h5 className="card-title mb-0">Productos</h5>
@@ -214,7 +212,7 @@ function OrdenCompraForm() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {orden.productos.map((producto, index) => (
+                                    {productosDisponibles.length > 0 && orden.productos.map((producto, index) => (
                                         <tr key={index}>
                                             <td>
                                                 <select
@@ -290,6 +288,7 @@ function OrdenCompraForm() {
                     </div>
                 </div>
 
+                {/* Botón de Envío */}
                 <button type="submit" className="btn btn-primary w-100">
                     {isEdit ? 'Actualizar Orden' : 'Crear Orden'}
                 </button>

@@ -8,7 +8,7 @@ function ProductosList() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        obtenerProductos();
+        obtenerProductos(); 
     }, []);
 
     const obtenerProductos = async () => {
