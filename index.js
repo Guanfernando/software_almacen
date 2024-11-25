@@ -263,10 +263,10 @@ app.post('/api/ordenes', (req, res) => {
         const ordenId = result.insertId;
 
         // Inserta cada producto de la orden en la tabla `ordenes_productos`
-        const sqlProducto = 'INSERT INTO ordenes_productos (orden_id, producto_id, cantidad, vr_unitario, subtotal) VALUES ?,?,?,?,?';
+        const sqlProducto = 'INSERT INTO ordenes_productos (orden_, producto_id, cantidad, vr_unitario, subtotal) VALUES ?,?,?,?,?';
         const valoresProductos = productos.map(producto => [
             ordenId,
-            producto.codigo,
+            producto.codigo,id
             producto.cantidad,
             producto.vr_unitario,
             producto.subtotal

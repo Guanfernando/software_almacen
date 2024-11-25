@@ -1,14 +1,14 @@
-// src/components/Productos/ProductosList.js
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { FaArrowLeft, FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 
 function ProductosList() {
     const [productos, setProductos] = useState([]);
     const navigate = useNavigate();
 
     useEffect(() => {
-        obtenerProductos(); 
+        obtenerProductos();
     }, []);
 
     const obtenerProductos = async () => {
@@ -33,18 +33,33 @@ function ProductosList() {
         }
     };
 
+    const formatoMoneda = (valor) => {
+        return new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+        }).format(valor);
+    };
+
     return (
         <div className="container mt-5">
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <button className="btn btn-secondary" onClick={() => navigate('/dashboard')}>
+                    <FaArrowLeft className="me-2" /> Volver al Dashboard
+                </button>
+                <button className="btn btn-primary" onClick={() => navigate('/productos/create')}>
+                    <FaPlus className="me-2" /> Agregar Producto
+                </button>
+            </div>
             <h2 className="text-center mb-4">Lista de Productos</h2>
-            <table className="table table-bordered">
-                <thead>
+            <table className="table table-striped">
+                <thead className="table-dark">
                     <tr>
                         <th>Código</th>
                         <th>Descripción</th>
                         <th>Cantidad</th>
                         <th>Vr Unitario</th>
                         <th>Vr Total</th>
-                        <th>Acciones</th>
+                        <th className="text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -53,27 +68,26 @@ function ProductosList() {
                             <td>{producto.codigo}</td>
                             <td>{producto.descripcion}</td>
                             <td>{producto.cantidad}</td>
-                            <td>{Number(producto.vr_unitario).toFixed(2)}</td>
-                            <td>{Number(producto.vr_total).toFixed(2)}</td>
-                            <td>
+                            <td>{formatoMoneda(producto.vr_unitario)}</td>
+                            <td>{formatoMoneda(producto.vr_total)}</td>
+                            <td className="text-center">
                                 <button
                                     className="btn btn-warning me-2"
                                     onClick={() => handleEdit(producto.codigo)}
                                 >
-                                    Editar
+                                    <FaEdit />
                                 </button>
                                 <button
                                     className="btn btn-danger"
                                     onClick={() => handleDelete(producto.codigo)}
                                 >
-                                    Eliminar
+                                    <FaTrash />
                                 </button>
                             </td>
                         </tr>
-                    ))}
+                    ))} 
                 </tbody>
             </table>
-            <button className="btn btn-primary mt-3" onClick={() => navigate('/productos/create')}>Agregar Producto</button>
         </div>
     );
 }
